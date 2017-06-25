@@ -16,6 +16,36 @@ void setup() {
     panner.attach(A5);
     pinMode(D7, OUTPUT);
     attachInterrupt(D1, connect, FALLING);
+
+    Particle.variable("angle", angle);
+    Particle.variable("max_angle", max_angle);
+    Particle.variable("min_angle", min_angle);
+    Particle.variable("inc", angle_inc);
+
+    Particle.function("toggle_pan", togglePanning);
+    Particle.function("max_angle", setMaxAngle);
+    Particle.function("min_angle", setMinAngle);
+    Particle.function("angle", setAngle);
+    Particle.function("inc", setIncrement);
+}
+
+int togglePanning(String foo) {
+  pan_enabled = ! pan_enabled;
+}
+int setIncrement(String new_increment) {
+    angle_inc = new_increment.toInt();
+}
+int setAngle(String new_angle) {
+    angle = new_angle.toInt();
+    panner.write(angle);
+}
+
+int setMaxAngle(String new_max_angle) {
+    max_angle = new_max_angle.toInt();
+}
+
+int setMinAngle(String new_min_angle) {
+    min_angle = new_min_angle.toInt();
 }
 
 void loop() {
@@ -23,7 +53,7 @@ void loop() {
         Particle.connect();
         //connectToCloud = false;
     }
-  
+
   if (pan_enabled) {
   if (cw) { 
       angle += angle_inc;
