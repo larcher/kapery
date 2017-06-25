@@ -57,16 +57,16 @@ void loop() {
   if (pan_enabled) {
   if (cw) { 
       angle += angle_inc;
-      if (angle >= max_angle) {
-          angle = max_angle;
-          cw = false;
-      }
   } else {
       angle -= angle_inc;
-      if (angle <= min_angle) {
-          angle = min_angle;
-          cw = true;
-      }
+  }
+  if (angle >= max_angle) {
+      angle = max_angle;
+      cw = false;
+  }
+  if (angle <= min_angle) {
+      angle = min_angle;
+      cw = true;
   }
   panner.write(angle);
   delay(interval);
