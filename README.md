@@ -9,6 +9,15 @@ For now, this program will continually pan a servo, within specified limits and 
 ## TODO
 
 * document how the servo(s) are wired up
-* add support for other devices (altimeter, temperature, ...)
-* log sensor values to memory, including mininmum and maximum values observed (just how high did the kite get?)
-* better (web-based) UI for controlling servo parameters, viewing sensor data
+* add support for other devices
+  - altimeter/barometer
+  - temperature
+  - accelerometer, gyroscope, compass ([one of these](https://www.adafruit.com/product/1604))
+* log sensor values to memory, including mininmum and maximum values observed, with timestamps
+  - just how high did the kite get? 
+  - and how cold is it up there?
+  - how much did it bounce around? 
+* better (web-based) UI for controlling servo parameters, viewing sensor data, via the Particle Cloud API
+* react smartly to sensor data 
+  - keep the camera pointed in a certain compass direction, or at the horizon
+  - 
