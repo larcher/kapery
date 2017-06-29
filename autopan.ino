@@ -7,7 +7,7 @@ int angle = 0;
 int min_angle = 0;
 int max_angle = 180;
 int angle_inc = 15;
-int interval=500;
+int servo_interval=500;
 bool pan_enabled = false;
 bool cw = true;
 
@@ -72,7 +72,7 @@ void loop() {
       cw = true;
     }
     panner.write(angle);
-    delay(interval);
+    delay(servo_interval);
   }
 }
 
