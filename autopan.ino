@@ -20,7 +20,25 @@ int servo_interval=500;
 bool pan_enabled = false;
 bool cw = true;
 
+////////////////////////////
+
+double recorded_max_temp;
+double recorded_min_temp;
+double recorded_max_alt;
+double recorded_min_alt;
+double recorded_max_pressure;
+double recorded_min_pressure;
+
 bool connectToCloud = true;
+
+void update_record_min_max(double var, double *min, double *max) {
+  if (var > *max) {
+      *max = var;
+  }
+  if (var < *min) {
+      *min =var;
+  }
+}
 
 void setup() {
   panner.attach(A5);
@@ -34,6 +52,25 @@ void setup() {
     Particle.publish("msg","Couldnt find sensor");
     delay(500);
   }
+
+  // initialize recorded min/max's
+  tempC = baro.getTemperature();
+  altm = baro.getAltitude();
+  pascals = baro.getPressure();
+
+  recorded_max_temp = tempC;
+  recorded_min_temp = tempC;
+  recorded_max_alt = altm;
+  recorded_min_alt = altm;
+  recorded_max_pressure = pascals;
+  recorded_min_pressure = pascals;
+
+  Particle.variable("max_temp", recorded_max_temp);
+  Particle.variable("min_temp", recorded_min_temp);
+  Particle.variable("max_alt", recorded_max_alt);
+  Particle.variable("min_alt", recorded_min_alt);
+  Particle.variable("max_pressure", recorded_max_pressure);
+  Particle.variable("min_pressure", recorded_min_pressure);
 
   Particle.variable("angle", angle);
   Particle.variable("max_angle", max_angle);
@@ -99,6 +136,9 @@ void loop() {
   tempC = baro.getTemperature();
   altm = baro.getAltitude();
   pascals = baro.getPressure();
+  update_record_min_max(tempC, &recorded_min_temp, &recorded_max_temp);
+  update_record_min_max(altm, &recorded_min_alt, &recorded_max_alt);
+  update_record_min_max(pascals, &recorded_min_pressure, &recorded_max_pressure);
 }
 
 void connect() {
