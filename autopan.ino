@@ -1,8 +1,17 @@
+// This #include statement was automatically added by the Particle IDE.
+#include <Adafruit_MPL3115A2.h>
 
 SYSTEM_MODE(SEMI_AUTOMATIC);
 
-Servo panner;
 
+////////////////////////////
+Adafruit_MPL3115A2 baro = Adafruit_MPL3115A2();
+double pascals = 0;
+double altm = 0 ;
+double tempC = 0;
+
+////////////////////////////
+Servo panner;
 int angle = 0;
 int min_angle = 0;
 int max_angle = 180;
@@ -18,10 +27,22 @@ void setup() {
   pinMode(D7, OUTPUT);
   attachInterrupt(D1, connect, FALLING);
 
+  delay(1000);
+  Wire.setSpeed(200000);
+  Wire.begin();
+  while (! baro.begin()) {
+    Particle.publish("msg","Couldnt find sensor");
+    delay(500);
+  }
+
   Particle.variable("angle", angle);
   Particle.variable("max_angle", max_angle);
   Particle.variable("min_angle", min_angle);
   Particle.variable("inc", angle_inc);
+
+  Particle.variable("altm", altm);
+  Particle.variable("tempC", tempC);
+  Particle.variable("pascals", pascals);
 
   Particle.function("toggle_pan", togglePanning);
   Particle.function("max_angle", setMaxAngle);
@@ -74,6 +95,10 @@ void loop() {
     panner.write(angle);
     delay(servo_interval);
   }
+
+  tempC = baro.getTemperature();
+  altm = baro.getAltitude();
+  pascals = baro.getPressure();
 }
 
 void connect() {
