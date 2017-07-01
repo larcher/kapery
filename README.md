@@ -26,5 +26,7 @@ This runs on a Photon
   - and how cold is it up there?
   - how much did it bounce around?
 * better (web-based) UI for controlling servo parameters, viewing sensor data, via the Particle Cloud API
+* interrupt support for sensors that can send interrupts
 * react smartly to sensor data
   - keep the camera pointed in a certain compass direction, or at the horizon
+  - enable/disable panning once altitude crosses a given threshold
