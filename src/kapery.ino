@@ -9,6 +9,14 @@ Adafruit_MPL3115A2 baro = Adafruit_MPL3115A2();
 double pascals = 0;
 double altm = 0 ;
 double tempC = 0;
+double recorded_max_temp;
+double recorded_min_temp;
+double recorded_max_alt;
+double recorded_min_alt;
+double recorded_max_pressure;
+double recorded_min_pressure;
+
+int sensor_interval = 5000;
 
 ////////////////////////////
 Servo panner;
@@ -16,18 +24,11 @@ int angle = 0;
 int min_angle = 0;
 int max_angle = 180;
 int angle_inc = 15;
-int servo_interval=500;
+int servo_interval = 500;
 bool pan_enabled = false;
 bool cw = true;
 
 ////////////////////////////
-
-double recorded_max_temp;
-double recorded_min_temp;
-double recorded_max_alt;
-double recorded_min_alt;
-double recorded_max_pressure;
-double recorded_min_pressure;
 
 bool connectToCloud = true;
 
@@ -39,6 +40,38 @@ void update_record_min_max(double var, double *min, double *max) {
       *min =var;
   }
 }
+
+void read_sensors() {
+  tempC = baro.getTemperature();
+  altm = baro.getAltitude();
+  pascals = baro.getPressure();
+  update_record_min_max(tempC, &recorded_min_temp, &recorded_max_temp);
+  update_record_min_max(altm, &recorded_min_alt, &recorded_max_alt);
+  update_record_min_max(pascals, &recorded_min_pressure, &recorded_max_pressure);
+}
+
+Timer sensor_timer(sensor_interval, read_sensors);
+
+void work_servo() {
+  if (pan_enabled) {
+    if (cw) {
+      angle += angle_inc;
+    } else {
+      angle -= angle_inc;
+    }
+    if (angle >= max_angle) {
+      angle = max_angle;
+      cw = false;
+    }
+    if (angle <= min_angle) {
+      angle = min_angle;
+      cw = true;
+    }
+    panner.write(angle);
+  }
+}
+
+Timer servo_timer(servo_interval, work_servo);
 
 void setup() {
   panner.attach(A5);
@@ -86,6 +119,13 @@ void setup() {
   Particle.function("min_angle", setMinAngle);
   Particle.function("angle", setAngle);
   Particle.function("inc", setIncrement);
+
+  Particle.function("sens_intvl", setSensorInterval);
+  Particle.function("servo_intvl", setServoInterval);
+
+  sensor_timer.start();
+  servo_timer.start();
+
 }
 
 int togglePanning(String foo) {
@@ -109,36 +149,19 @@ int setMinAngle(String new_min_angle) {
   min_angle = new_min_angle.toInt();
 }
 
+int setSensorInterval(String new_sensor_interval) {
+  sensor_timer.changePeriod(new_sensor_interval.toInt());
+}
+
+int setServoInterval(String new_interval) {
+  servo_timer.changePeriod(new_interval.toInt());
+}
+
 void loop() {
   if(connectToCloud && Particle.connected() == false) {
     Particle.connect();
     //connectToCloud = false;
   }
-
-  if (pan_enabled) {
-    if (cw) {
-      angle += angle_inc;
-    } else {
-      angle -= angle_inc;
-    }
-    if (angle >= max_angle) {
-      angle = max_angle;
-      cw = false;
-    }
-    if (angle <= min_angle) {
-      angle = min_angle;
-      cw = true;
-    }
-    panner.write(angle);
-    delay(servo_interval);
-  }
-
-  tempC = baro.getTemperature();
-  altm = baro.getAltitude();
-  pascals = baro.getPressure();
-  update_record_min_max(tempC, &recorded_min_temp, &recorded_max_temp);
-  update_record_min_max(altm, &recorded_min_alt, &recorded_max_alt);
-  update_record_min_max(pascals, &recorded_min_pressure, &recorded_max_pressure);
 }
 
 void connect() {
