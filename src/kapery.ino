@@ -3,8 +3,12 @@
 
 SYSTEM_MODE(SEMI_AUTOMATIC);
 
+////////////////////////////
+
+bool connectToCloud = true;
 
 ////////////////////////////
+// Sensors
 Adafruit_MPL3115A2 baro = Adafruit_MPL3115A2();
 double pascals = 0;
 double altm = 0 ;
@@ -17,20 +21,6 @@ double recorded_max_pressure;
 double recorded_min_pressure;
 
 int sensor_interval = 5000;
-
-////////////////////////////
-Servo panner;
-int angle = 0;
-int min_angle = 0;
-int max_angle = 180;
-int angle_inc = 15;
-int servo_interval = 500;
-bool pan_enabled = false;
-bool cw = true;
-
-////////////////////////////
-
-bool connectToCloud = true;
 
 void update_record_min_max(double var, double *min, double *max) {
   if (var > *max) {
@@ -52,32 +42,11 @@ void read_sensors() {
 
 Timer sensor_timer(sensor_interval, read_sensors);
 
-void work_servo() {
-  if (pan_enabled) {
-    if (cw) {
-      angle += angle_inc;
-    } else {
-      angle -= angle_inc;
-    }
-    if (angle >= max_angle) {
-      angle = max_angle;
-      cw = false;
-    }
-    if (angle <= min_angle) {
-      angle = min_angle;
-      cw = true;
-    }
-    panner.write(angle);
-  }
+int setSensorInterval(String new_sensor_interval) {
+  sensor_timer.changePeriod(new_sensor_interval.toInt());
 }
 
-Timer servo_timer(servo_interval, work_servo);
-
-void setup() {
-  panner.attach(A5);
-  pinMode(D7, OUTPUT);
-  attachInterrupt(D1, connect, FALLING);
-
+void setup_sensors() {
   delay(1000);
   Wire.setSpeed(200000);
   Wire.begin();
@@ -105,56 +74,93 @@ void setup() {
   Particle.variable("max_pressure", recorded_max_pressure);
   Particle.variable("min_pressure", recorded_min_pressure);
 
-  Particle.variable("angle", angle);
-  Particle.variable("max_angle", max_angle);
-  Particle.variable("min_angle", min_angle);
-  Particle.variable("inc", angle_inc);
-
   Particle.variable("altm", altm);
   Particle.variable("tempC", tempC);
   Particle.variable("pascals", pascals);
 
-  Particle.function("toggle_pan", togglePanning);
-  Particle.function("max_angle", setMaxAngle);
-  Particle.function("min_angle", setMinAngle);
-  Particle.function("angle", setAngle);
-  Particle.function("inc", setIncrement);
-
   Particle.function("sens_intvl", setSensorInterval);
-  Particle.function("servo_intvl", setServoInterval);
 
   sensor_timer.start();
-  servo_timer.start();
-
 }
 
-int togglePanning(String foo) {
-  pan_enabled = ! pan_enabled;
+////////////////////////////
+// Servo
+Servo panner;
+int angle = 0;
+int min_angle = 0;
+int max_angle = 180;
+int angle_inc = 15;
+int servo_interval = 500;
+bool pan_enabled = false;
+bool cw = true;
+
+void work_servo() {
+  if (pan_enabled) {
+    if (cw) {
+      angle += angle_inc;
+    } else {
+      angle -= angle_inc;
+    }
+    if (angle >= max_angle) {
+      angle = max_angle;
+      cw = false;
+    }
+    if (angle <= min_angle) {
+      angle = min_angle;
+      cw = true;
+    }
+    panner.write(angle);
+  }
 }
 
-int setIncrement(String new_increment) {
-  angle_inc = new_increment.toInt();
+Timer servo_timer(servo_interval, work_servo);
+
+int setServoInterval(String new_interval) {
+  servo_timer.changePeriod(new_interval.toInt());
 }
+
+int togglePanning(String foo) { pan_enabled = ! pan_enabled; }
+int setIncrement(String new_increment) { angle_inc = new_increment.toInt(); }
+int setMaxAngle(String new_max_angle) { max_angle = new_max_angle.toInt(); }
+int setMinAngle(String new_min_angle) { min_angle = new_min_angle.toInt(); }
 
 int setAngle(String new_angle) {
   angle = new_angle.toInt();
   panner.write(angle);
 }
 
-int setMaxAngle(String new_max_angle) {
-  max_angle = new_max_angle.toInt();
+void setup_servo() {
+  panner.attach(A5);
+
+  Particle.variable("angle", angle);
+  Particle.variable("max_angle", max_angle);
+  Particle.variable("min_angle", min_angle);
+  Particle.variable("inc", angle_inc);
+
+  Particle.function("toggle_pan", togglePanning);
+  Particle.function("max_angle", setMaxAngle);
+  Particle.function("min_angle", setMinAngle);
+  Particle.function("angle", setAngle);
+  Particle.function("inc", setIncrement);
+  Particle.function("servo_intvl", setServoInterval);
+
+  servo_timer.start();
 }
 
-int setMinAngle(String new_min_angle) {
-  min_angle = new_min_angle.toInt();
+////////////////////////////
+
+void connect() {
+  connectToCloud = true;
 }
 
-int setSensorInterval(String new_sensor_interval) {
-  sensor_timer.changePeriod(new_sensor_interval.toInt());
-}
+////////////////////////////
 
-int setServoInterval(String new_interval) {
-  servo_timer.changePeriod(new_interval.toInt());
+void setup() {
+  pinMode(D7, OUTPUT);
+  attachInterrupt(D1, connect, FALLING);
+
+  setup_servo();
+  setup_sensors();
 }
 
 void loop() {
@@ -164,6 +170,3 @@ void loop() {
   }
 }
 
-void connect() {
-  connectToCloud = true;
-}
