@@ -22,12 +22,14 @@ double recorded_min_pressure;
 
 int sensor_interval = 5000;
 
-void update_record_min_max(double var, double *min, double *max) {
+void update_record_min_max(double var, double *min, double *max, String name) {
   if (var > *max) {
       *max = var;
+      Particle.publish("New max " + name, String(var));
   }
   if (var < *min) {
       *min =var;
+      Particle.publish("New min " + name, String(var));
   }
 }
 
@@ -35,9 +37,9 @@ void read_sensors() {
   tempC = baro.getTemperature();
   altm = baro.getAltitude();
   pascals = baro.getPressure();
-  update_record_min_max(tempC, &recorded_min_temp, &recorded_max_temp);
-  update_record_min_max(altm, &recorded_min_alt, &recorded_max_alt);
-  update_record_min_max(pascals, &recorded_min_pressure, &recorded_max_pressure);
+  update_record_min_max(tempC, &recorded_min_temp, &recorded_max_temp, "Temp");
+  update_record_min_max(altm, &recorded_min_alt, &recorded_max_alt, "Alt");
+  update_record_min_max(pascals, &recorded_min_pressure, &recorded_max_pressure, "Pressure");
 }
 
 Timer sensor_timer(sensor_interval, read_sensors);
